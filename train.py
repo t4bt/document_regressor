@@ -14,7 +14,7 @@ import model
 def parse_cmd_args():
     parser = argparse.ArgumentParser(description='Chainer Training:')
     parser.add_argument('--batchsize', '-b', type=int, default=256,
-                        help='Number of docs in each mini-batch')
+                        help='Number of data in each mini-batch')
     parser.add_argument('--learnrate', '-l', type=float, default=1e-3,
                         help='Learning rate for optimizer')
     parser.add_argument('--w_decay', '-w', type=float, default=1e-4,
@@ -74,7 +74,7 @@ def prepare_extensions(trainer, evaluator, args):
             'epoch', file_name='r2.png'))
     trainer.extend(extensions.ProgressBar(update_interval=100))
 
-def train_using_gpu(args, model, docs, target, valid_rate=0.1, lr=1e-3, weight_decay=1e-3):
+def train_using_gpu(args, model, x, t, valid_rate=0.1, lr=1e-3, weight_decay=1e-3):
     if args.n_gpus == 1:
         print('Start a training script using single GPU.')
     else:
@@ -82,9 +82,9 @@ def train_using_gpu(args, model, docs, target, valid_rate=0.1, lr=1e-3, weight_d
         print('Start a training script using multiple GPUs.')
 
     # Set up a dataset and prepare train/valid data iterator.
-    threshold = int(len(target)*(1-valid_rate))
-    train = datasets.tuple_dataset.TupleDataset(docs[0:threshold], target[0:threshold])
-    valid = datasets.tuple_dataset.TupleDataset(docs[threshold:], target[threshold:])
+    threshold = int(len(t)*(1-valid_rate))
+    train = datasets.tuple_dataset.TupleDataset(x[0:threshold], t[0:threshold])
+    valid = datasets.tuple_dataset.TupleDataset(x[threshold:], t[threshold:])
 
     if args.n_gpus == 1:
         train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
@@ -139,13 +139,13 @@ def train_using_gpu(args, model, docs, target, valid_rate=0.1, lr=1e-3, weight_d
     model_filepath = os.path.join(args.out, 'trained.model')
     chainer.serializers.save_npz(model_filepath, model)
 
-def train_using_cpu(args, model, docs, target, valid_rate=0.1, lr=1e-3, weight_decay=1e-4):
+def train_using_cpu(args, model, x, t, valid_rate=0.1, lr=1e-3, weight_decay=1e-4):
     print('Start a training script using single CPU.')
 
     # Set up a dataset and prepare train/valid data iterator.
-    threshold = int(len(target)*(1-valid_rate))
-    train = datasets.tuple_dataset.TupleDataset(docs[0:threshold], target[0:threshold])
-    valid = datasets.tuple_dataset.TupleDataset(docs[threshold:], target[threshold:])
+    threshold = int(len(t)*(1-valid_rate))
+    train = datasets.tuple_dataset.TupleDataset(x[0:threshold], t[0:threshold])
+    valid = datasets.tuple_dataset.TupleDataset(x[threshold:], t[threshold:])
 
     train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
     valid_iter = chainer.iterators.SerialIterator(valid, args.batchsize,
