@@ -22,10 +22,10 @@ class CNNRegressor(Chain):
             self.bn_fc = L.BatchNormalization(n_filters * len(filters))
             self.fc = L.Linear(None, 1)
 
-    def __call__(self, docs):
-        n_docs = len(docs)
+    def __call__(self, x):
+        n_docs = len(x)
         #docs -> N x 2D_Arr(length x embed_size)
-        emb = self.embed(docs)
+        emb = self.embed(x)
         emb = emb.reshape(n_docs,1,-1,self.embed_size)    #NCHW
         #Convolution and Activation(relu)
         self.h_conv = [F.tanh(self.bn[i](conv(emb))) for i, conv in enumerate(self.conv)]
